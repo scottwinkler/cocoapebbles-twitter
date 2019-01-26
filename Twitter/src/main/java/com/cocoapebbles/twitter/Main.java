@@ -9,8 +9,6 @@ import twitter4j.Relationship;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
-
 import java.util.logging.Logger;
 
 public class Main extends JavaPlugin implements Listener{
@@ -23,8 +21,7 @@ public class Main extends JavaPlugin implements Listener{
     public void onEnable(){
         registerCommands();
         registerEvents();
-        AccessToken accessToken = new AccessToken("1080969936032346112-bw6j16YIknQXtx8t04PxFZTuF8JtZr","FB08uZremdyLa63wma780vwMZjVImQ3dyFQsrbEWV1aEu");
-        Twitter twitter = new TwitterFactory().getInstance(accessToken);
+        Twitter twitter = new TwitterFactory().getInstance();
         try {
             Relationship relationship = twitter.showFriendship("@ScottWinkler16", "@ansonium");
             System.out.println("isSourceBlockingTarget: " + relationship.isSourceBlockingTarget());
