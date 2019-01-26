@@ -1,0 +1,13 @@
+name: Twitter
+main: com.cocoapebbles.twitter.Main
+version: 1.0
+api-version: 1.13
+commands:
+   twitter:
+      description: Allows you to interact with social media
+      usage: "Type '/twitter help' to see available commands"
+      permission: twitter
+permissions:
+  twitter:
+    description: Allows twitter command(s)
+    default: true
