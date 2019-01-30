@@ -12,7 +12,8 @@ import twitter4j.TwitterFactory;
 import java.util.logging.Logger;
 
 public class Main extends JavaPlugin implements Listener{
-    private Logger logger;
+    public Logger logger;
+    public Twitter twitter;
 
     public Main(){
         logger = this.getLogger();
@@ -21,8 +22,9 @@ public class Main extends JavaPlugin implements Listener{
     public void onEnable(){
         registerCommands();
         registerEvents();
-        Twitter twitter = new TwitterFactory().getInstance();
-        try {
+        initializeTwitter();
+        //Twitter twitter = new TwitterFactory().getInstance();
+        /*try {
             Relationship relationship = twitter.showFriendship("@ScottWinkler16", "@ansonium");
             System.out.println("isSourceBlockingTarget: " + relationship.isSourceBlockingTarget());
             System.out.println("isSourceFollowedByTarget: " + relationship.isSourceFollowedByTarget());
@@ -33,7 +35,11 @@ public class Main extends JavaPlugin implements Listener{
         catch (TwitterException e) {
             e.printStackTrace();
             System.out.println("Failed to show friendship: " + e.getMessage());
-        }
+        }*/
+    }
+
+    public void initializeTwitter(){
+        twitter = new TwitterFactory().getInstance();
     }
     @Override
     public void onDisable(){
