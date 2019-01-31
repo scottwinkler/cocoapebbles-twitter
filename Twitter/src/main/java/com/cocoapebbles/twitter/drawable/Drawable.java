@@ -13,9 +13,4 @@ public interface Drawable {
      * Cleans up resource
      */
     void clear();
-
-    /**
-     * Convenience method for refreshing existing resource
-     */
-    void redraw();
 }

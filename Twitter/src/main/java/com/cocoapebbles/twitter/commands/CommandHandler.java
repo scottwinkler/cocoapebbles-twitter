@@ -1,20 +1,19 @@
 package com.cocoapebbles.twitter.commands;
 
 import com.cocoapebbles.twitter.Main;
+import com.cocoapebbles.twitter.Town;
+import com.cocoapebbles.twitter.clients.WorldEditClient;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
-import twitter4j.IDs;
-import twitter4j.TwitterException;
+import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 
 public class CommandHandler implements CommandExecutor {
     private Main m;
-
+    private Town town;
     public CommandHandler(Main m) {
         this.m = m;
     }
@@ -29,18 +28,24 @@ public class CommandHandler implements CommandExecutor {
     }
 
     public boolean friendHandler(CommandSender sender, String[]args){
-        try {
-            IDs ids = m.twitter.friendsFollowers().getFollowersIDs(-1);
-            
-        } catch(TwitterException e){
-            e.printStackTrace();
+        switch(args[0]) {
+            case "clear": town.clearAll();
+            case "create": {
+                Player player = (Player) sender;
+                WorldEditClient wec = WorldEditClient.getInstance();
+                wec.addPlayer(player);
+                town = new Town(player.getWorld());
+                town.drawAll();
+            }
         }
+        return true;
     }
 
     public boolean helpHandler(CommandSender sender, String[]args){
         String[] message = new String[]{
                 ChatColor.AQUA+ "[Twitter] Cocoapebble's twitter Mod!",
-                ChatColor.AQUA+"  help: makes all your dreams come true"
+                ChatColor.AQUA+"  help: makes all your dreams come true",
+                ChatColor.AQUA+"  friends: makes all your dreams come true"
         };
         sender.sendMessage(message);
         return true;
