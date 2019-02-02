@@ -2,6 +2,9 @@ package com.cocoapebbles.twitter.drawable;
 
 import org.bukkit.Location;
 
+/**
+ * Represents a drawable plot in XYZ space
+ */
 public interface Drawable {
 
     /**
@@ -10,7 +13,18 @@ public interface Drawable {
     void draw();
 
     /**
-     * Cleans up resource
+     * Removes the resource
      */
     void clear();
+
+    /**
+     * Initialize the drawable resource
+     */
+    <T> void initialize(T entity,Location location, boolean flip);
+
+    /**
+     * Gets the Dimensions
+     */
+
+    Dimensions getDimensions();
 }

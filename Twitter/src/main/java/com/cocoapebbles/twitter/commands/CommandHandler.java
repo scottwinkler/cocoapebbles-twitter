@@ -4,10 +4,13 @@ import com.cocoapebbles.twitter.Main;
 import com.cocoapebbles.twitter.Town;
 import com.cocoapebbles.twitter.clients.WorldEditClient;
 import org.bukkit.ChatColor;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.Arrays;
 
@@ -32,6 +35,8 @@ public class CommandHandler implements CommandExecutor {
             case "clear": town.clearAll();
             case "create": {
                 Player player = (Player) sender;
+                PlayerInteractEvent pie = new PlayerInteractEvent(player, Action.LEFT_CLICK_BLOCK,player.getInventory().getItemInMainHand(),player.getWorld().getBlockAt(player.getLocation()),BlockFace.NORTH_NORTH_WEST);
+                m.pm.callEvent(pie);
                 WorldEditClient wec = WorldEditClient.getInstance();
                 wec.addPlayer(player);
                 town = new Town(player.getWorld());

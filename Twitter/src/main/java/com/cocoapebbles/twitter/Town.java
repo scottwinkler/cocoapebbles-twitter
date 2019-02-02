@@ -1,94 +1,110 @@
 package com.cocoapebbles.twitter;
 
 import com.cocoapebbles.twitter.clients.TwitterClient;
+import com.cocoapebbles.twitter.constants.Dim;
 import com.cocoapebbles.twitter.drawable.*;
+import com.cocoapebbles.twitter.utility.Utility;
 import org.bukkit.Location;
 import org.bukkit.World;
-import twitter4j.IDs;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
+import twitter4j.*;
 
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 public class Town {
     private World world;
     private Twitter twitter;
     private ArrayList<Drawable> drawables;
 
+    //Could put this in a Twitter DAO
+    public ArrayList<User> getFriends(){
+        ArrayList<User> users = new ArrayList<>();
+        try {
+            String screenName = twitter.users().getAccountSettings().getScreenName();
+            long cursor = -1;
+            PagableResponseList<User> paginatedUsers;
+            do {
+                paginatedUsers = twitter.friendsFollowers().getFriendsList(screenName, cursor, 200);
+                for (User user : paginatedUsers) {
+                    users.add(user);
+                }
+            } while ((cursor = paginatedUsers.getNextCursor()) != 0);
+        } catch(TwitterException e){
+            e.printStackTrace();
+        }
+        return users;
+    }
 
     public Town(World world){
         drawables = new ArrayList<>();
         this.world = world;
         twitter = TwitterClient.getInstance().twitter;
-        try {
-            IDs ids = twitter.friendsFollowers().getFriendsIDs(-1);
-            long[] idsArr = ids.getIDs();
-           // int index = 0;
-            //int end = idsArr.length + (10-(idsArr.length%10))-1;
-            Location location = new Location(world,0,70,0);
-            for (int i =0;i<idsArr.length;i=i+10){
-                System.out.println("Creating new housing block: "+i);
-                createHousingBlock(idsArr,i,location);
-                //only going 24 instead of 28 to create some overlap with the roads
-                location.add(0.0,0.0,24);
+        ArrayList<User> friends = getFriends();
+        int rowCount = 5;
+        int len = friends.size();
+        Location location = new Location(world,0,70,0);
+        for (int i =0;i<len;i+=10){
+            int end = i + rowCount*2;
+            if(end>len){
+                end = len;
             }
-        }catch (TwitterException e){
-            e.printStackTrace();
+            ArrayList<User> friendsSlice = new ArrayList<User>(friends.subList(i,end));
+            createCityBlock(friendsSlice,House::new,rowCount,location);
+            int zOffset = Dim.HOUSE_DIMENSIONS.getWidthZ()*2+Dim.ROAD_WIDTH;
+            location.add(0,0,zOffset);
         }
+        drawAll();
     }
 
-    private Location relativePos(Location location,int x, int z){
-        return new Location(location.getWorld(),location.getX()+(double)x,location.getY(),location.getZ()+(double)z);
-    }
 
-    private Region relativeRegion(Location location,int x, int z, int lengthX, int widthZ){
-        return new Region(relativePos(location,x,z),relativePos(location,x+lengthX-1,z+widthZ-1));
-    }
 
-    private void createCityBlock(Object[] entities, int lengthX, int widthZ, Location location){
 
-    }
-    private void createHousingBlock(long[] ids, int index, Location location){
+    //A helper function for creating city blocks, surrounded by roads and filled with drawables
+    private void createCityBlock(ArrayList<?> entities, Supplier<Drawable> constructor, int rowCount, Location location){
+        Drawable reference = constructor.get();
+        Dimensions dimensions = reference.getDimensions();
+        int widthZ = dimensions.getWidthZ();
+        int lengthX = dimensions.getLengthX();
+        int roadWidth = Dim.ROAD_WIDTH;
+
         //create 4 roads surrounding the block
         System.out.println("Making roads");
-        drawables.add(new Road(relativeRegion(location,0,0,4,28)));
-        drawables.add(new Road(relativeRegion(location,4,0,50,4)));
-        drawables.add(new Road(relativeRegion(location,54,0,4,28)));
-        drawables.add(new Road(relativeRegion(location,4,24,50,4)));
+        //top
+        drawables.add(new Road(new Dimensions(lengthX*rowCount,1,roadWidth), Utility.relativePos(location,roadWidth,2*widthZ+roadWidth)));
+        //right
+        drawables.add(new Road(new Dimensions(roadWidth,1,2*(widthZ+roadWidth)),Utility.relativePos(location,0,0)));
+        //bottom
+        drawables.add(new Road(new Dimensions(lengthX*rowCount,1,roadWidth),Utility.relativePos(location,roadWidth,0)));
+        //left
+        drawables.add(new Road(new Dimensions(roadWidth,1,2*(widthZ+roadWidth)),Utility.relativePos(location,roadWidth+lengthX*rowCount,0)));
 
-        //create houses
-        int len = ids.length;
-        int end = index+10;
-        int curX = 4;
-        int curZ = 4;
-        System.out.println("index: " +index+",end: "+end+", ids len: "+ids.length);
-        for(int i =index;i<end;i++){
+        //Create drawables
+        int len = entities.size();
+        int end = 2*rowCount;
+        int curX = roadWidth;
+        int curZ = roadWidth;
+        for(int i =0;i<end;i++){
             Drawable drawable = null;
             int remaining = (end-i);
-            //reset to top right corner
-            if (remaining==5){
-                curZ=23;
-                curX=4;
+            if (remaining ==rowCount){
+                //reset to top right corner
+                curZ = 2*widthZ+roadWidth-1;
+                curX = roadWidth+lengthX-1;
             }
-            Region region = null;
-            System.out.println("curX: "+curX+", curZ: "+curZ+", remaining: "+ remaining);
-            boolean flip = (remaining>5);
-            if (flip){
-                region = new Region(relativePos(location,curX+9,curZ),relativePos(location,curX,curZ+9));
-            }else{
-                region = new Region(relativePos(location,curX,curZ),relativePos(location,curX+9,curZ-9));
-            }
-            //create a house if able, otherwise fill with an empty lot
-            if (i<len) {
-                long id = ids[i];
-                drawable = new House(id, region, flip);
-            } else{
-                drawable = new EmptyLot(region);
+            boolean flip = (remaining<=5);
+            Location curPos = Utility.relativePos(location,curX,curZ);
+            //create entity if able
+            if (i<len){
+                drawable = constructor.get();
+                drawable.initialize(entities.get(i),curPos,flip);
+            } else {
+                drawable = new EmptyLot(dimensions.getFlatDimensions());
+                drawable.initialize(null,curPos,flip);
             }
             drawables.add(drawable);
 
-            //calculate next coordinate position, going in a zigzag fashion
-            curX+=10;
+            //calculate next coordinate position, going across
+            curX+=lengthX;
         }
     }
 

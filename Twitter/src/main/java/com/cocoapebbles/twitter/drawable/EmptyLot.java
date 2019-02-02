@@ -1,26 +1,39 @@
 package com.cocoapebbles.twitter.drawable;
 
-import com.cocoapebbles.twitter.Region;
 import com.cocoapebbles.twitter.clients.WorldEditClient;
 import com.cocoapebbles.twitter.constants.Blocks;
+import org.bukkit.Location;
 
 public class EmptyLot implements Drawable{
     private WorldEditClient wec;
-    private Region region;
+    private Dimensions dimensions;
+    private Location location;
+    private boolean flip;
     private int block;
 
-    public EmptyLot(Region region){
+    public EmptyLot(Dimensions dimensions){
+        this.dimensions = dimensions;
         wec = WorldEditClient.getInstance();
-        this.region = region;
-        this.block = Blocks.GRASS;
+        block = Blocks.GRASS;
     }
     @Override
     public void draw() {
-        wec.setRegion(region,block);
+        wec.setRegion(location, dimensions, flip, block);
     }
 
     @Override
     public void clear() {
-        wec.clearRegion(region,0);
+        wec.setRegion(location,dimensions,flip, Blocks.GRASS);
+    }
+
+    @Override
+    public <T> void initialize(T entity, Location location, boolean flip) {
+        this.location = location;
+        this.flip = flip;
+    }
+
+    @Override
+    public Dimensions getDimensions() {
+        return dimensions;
     }
 }

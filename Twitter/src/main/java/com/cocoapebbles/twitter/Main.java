@@ -2,6 +2,7 @@ package com.cocoapebbles.twitter;
 
 import com.cocoapebbles.twitter.commands.CommandHandler;
 
+import com.cocoapebbles.twitter.events.PlayerInteract;
 import com.cocoapebbles.twitter.events.PlayerJoin;
 import com.cocoapebbles.twitter.events.PlayerLeave;
 import org.bukkit.event.Listener;
@@ -13,7 +14,8 @@ import java.util.logging.Logger;
 
 public class Main extends JavaPlugin implements Listener{
     public Logger logger;
-    public Twitter twitter;
+    //public Twitter twitter;
+    public PluginManager pm;
 
     public Main(){
         logger = this.getLogger();
@@ -22,12 +24,13 @@ public class Main extends JavaPlugin implements Listener{
     public void onEnable(){
         registerCommands();
         registerEvents();
-        initializeTwitter();
+        //initializeTwitter();
+
     }
 
-    public void initializeTwitter(){
-        twitter = new TwitterFactory().getInstance();
-    }
+   // public void initializeTwitter(){
+       // twitter = new TwitterFactory().getInstance();
+
     @Override
     public void onDisable(){
 
@@ -39,9 +42,10 @@ public class Main extends JavaPlugin implements Listener{
 
     public void registerEvents()
     {
-        PluginManager pm = getServer().getPluginManager();
+        pm = getServer().getPluginManager();
         pm.registerEvents(new PlayerJoin(),this);
         pm.registerEvents(new PlayerLeave(),this);
+        pm.registerEvents(new PlayerInteract(),this);
     }
 
 

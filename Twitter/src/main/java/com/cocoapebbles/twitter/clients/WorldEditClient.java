@@ -1,8 +1,8 @@
 package com.cocoapebbles.twitter.clients;
 
-import com.cocoapebbles.twitter.Region;
+import com.cocoapebbles.twitter.drawable.Dimensions;
 import com.cocoapebbles.twitter.constants.Blocks;
-import com.cocoapebbles.twitter.drawable.Drawable;
+import com.cocoapebbles.twitter.utility.Utility;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -54,7 +54,10 @@ public class WorldEditClient {
     }
 
     public void drawSchematic(String schematic, Location location,boolean flip){
+        //correction for the save file oddity
+        location.add(0,0.5,0);
         String coordinate = locationToCoordinate(location);
+        System.out.println(coordinate);
         //load schematic only if it isn't already in the clipboard
         if(!_currentSchematic.equals(schematic)){
             performCommand("/schematic load "+schematic);
@@ -71,31 +74,14 @@ public class WorldEditClient {
         }
     }
 
-    /**
-     * expects the two points of region to be at the same y height
-     * @param region
-     * @param height
-     */
-    public void clearRegion(Region region,int height){
-        Location pos1 = region.getPos1();
-        Location pos2 = new Location(region.getPos2().getWorld(),region.getPos2().getX(),region.getPos2().getY()+height,region.getPos2().getZ());
-        pos2.setY(pos2.getY()+height);
-        String coordinate1 = locationToCoordinate(pos1);
-        String coordinate2 = locationToCoordinate(pos2);
-        performCommand("/pos1 "+coordinate1);
-        performCommand("/pos2 " + coordinate2);
-        int airBlock = Blocks.AIR;
-        performCommand("/set " +airBlock);
-        coordinate2 = locationToCoordinate(region.getPos2());
-        //performCommand("/pos1 "+coordinate1);
-        performCommand("/pos2 " + coordinate2);
-        int grassBlock = Blocks.GRASS;
-        performCommand("/set "+grassBlock);
-    }
-
-    public void setRegion(Region region, int block){
-        Location pos1 = region.getPos1();
-        Location pos2 = region.getPos2();
+    public void setRegion(Location location, Dimensions dimensions, boolean flip, int block){
+        Location pos1 = location;
+        Location pos2 = null;
+        if (!flip){
+            pos2 = Utility.relativePos(location,dimensions.getLengthX()-1,dimensions.getHeightY()-1,dimensions.getWidthZ()-1);
+        } else {
+            pos2 = Utility.relativePos(location,-dimensions.getLengthX()+1,dimensions.getHeightY()-1,-dimensions.getWidthZ()+1);
+        }
         String coordinate1 = locationToCoordinate(pos1);
         String coordinate2 = locationToCoordinate(pos2);
         performCommand("/pos1 "+coordinate1);
