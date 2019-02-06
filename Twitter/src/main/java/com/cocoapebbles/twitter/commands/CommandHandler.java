@@ -35,8 +35,6 @@ public class CommandHandler implements CommandExecutor {
             case "clear": town.clearAll();
             case "create": {
                 Player player = (Player) sender;
-                PlayerInteractEvent pie = new PlayerInteractEvent(player, Action.LEFT_CLICK_BLOCK,player.getInventory().getItemInMainHand(),player.getWorld().getBlockAt(player.getLocation()),BlockFace.NORTH_NORTH_WEST);
-                m.pm.callEvent(pie);
                 WorldEditClient wec = WorldEditClient.getInstance();
                 wec.addPlayer(player);
                 town = new Town(player.getWorld());

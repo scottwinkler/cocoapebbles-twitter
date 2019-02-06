@@ -9,6 +9,7 @@ import org.bukkit.World;
 import twitter4j.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Supplier;
 
 public class Town {
@@ -32,6 +33,7 @@ public class Town {
         } catch(TwitterException e){
             e.printStackTrace();
         }
+        Collections.sort(users);
         return users;
     }
 
@@ -53,7 +55,6 @@ public class Town {
             int zOffset = Dim.HOUSE_DIMENSIONS.getWidthZ()*2+Dim.ROAD_WIDTH;
             location.add(0,0,zOffset);
         }
-        drawAll();
     }
 
 
