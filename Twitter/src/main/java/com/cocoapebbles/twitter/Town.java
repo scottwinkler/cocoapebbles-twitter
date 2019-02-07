@@ -1,11 +1,16 @@
 package com.cocoapebbles.twitter;
 
+import com.cocoapebbles.twitter.clients.ListenerClient;
 import com.cocoapebbles.twitter.clients.TwitterClient;
 import com.cocoapebbles.twitter.constants.Dim;
+import com.cocoapebbles.twitter.constants.Events;
 import com.cocoapebbles.twitter.drawable.*;
+import com.cocoapebbles.twitter.events.EntityDeath;
 import com.cocoapebbles.twitter.utility.Utility;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDeathEvent;
 import twitter4j.*;
 
 import java.util.ArrayList;
@@ -15,6 +20,7 @@ import java.util.function.Supplier;
 public class Town {
     private World world;
     private Twitter twitter;
+    private ListenerClient lc;
     private ArrayList<Drawable> drawables;
 
     //Could put this in a Twitter DAO
@@ -37,14 +43,47 @@ public class Town {
         return users;
     }
 
-    public Town(World world){
+    public User getUser(){
+        User user = null;
+        try{
+            String screenName = twitter.users().getAccountSettings().getScreenName();
+            user = twitter.users().showUser(screenName);
+        } catch(TwitterException e){
+            e.printStackTrace();
+        }
+        return user;
+    }
+
+    public void handleMobMurdered(Event event){
+        EntityDeathEvent e = (EntityDeathEvent) event;
+        String mobName = e.getEntity().getClass().getSimpleName().replace("Craft","");
+        String tweetText = "I killed a "+mobName + " in Minecraft";
+        StatusUpdate statusUpdate = new StatusUpdate(tweetText);
+        try {
+            twitter.tweets().updateStatus(statusUpdate);
+        }catch(TwitterException te){
+            te.printStackTrace();
+        }
+    }
+    public Town(World world,Location location){
         drawables = new ArrayList<>();
         this.world = world;
         twitter = TwitterClient.getInstance().twitter;
         ArrayList<User> friends = getFriends();
         int rowCount = 5;
         int len = friends.size();
-        Location location = new Location(world,0,70,0);
+
+        //send tweet when a mob is murdered
+        lc = ListenerClient.getInstance();
+        lc.subscribe(Events.MOB_MURDERED,e->handleMobMurdered(e));
+
+        //draw farm
+        Location farmLocation = Utility.relativePos(location,(Dim.ROAD_WIDTH+Dim.HOUSE_DIMENSIONS.getLengthX()*5),0);
+        Farm farm = new Farm();
+        farm.initialize(getUser(),farmLocation,false);
+        drawables.add(farm);
+
+        //draw follower houses
         for (int i =0;i<len;i+=10){
             int end = i + rowCount*2;
             if(end>len){
@@ -55,6 +94,7 @@ public class Town {
             int zOffset = Dim.HOUSE_DIMENSIONS.getWidthZ()*2+Dim.ROAD_WIDTH;
             location.add(0,0,zOffset);
         }
+
     }
 
 
@@ -69,7 +109,6 @@ public class Town {
         int roadWidth = Dim.ROAD_WIDTH;
 
         //create 4 roads surrounding the block
-        System.out.println("Making roads");
         //top
         drawables.add(new Road(new Dimensions(lengthX*rowCount,1,roadWidth), Utility.relativePos(location,roadWidth,2*widthZ+roadWidth)));
         //right

@@ -3,6 +3,7 @@ package com.cocoapebbles.twitter.events;
 import com.cocoapebbles.twitter.clients.ListenerClient;
 import com.cocoapebbles.twitter.clients.WorldEditClient;
 import com.cocoapebbles.twitter.constants.Events;
+import com.cocoapebbles.twitter.utility.Utility;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,6 +28,6 @@ public class PlayerInteract implements Listener {
         if (event.getAction()== Action.PHYSICAL&& event.getClickedBlock().getType()== Material.STONE_PRESSURE_PLATE){
             lc.handleEvent(Events.BUTTON_DOWN,event);
         }
-       // System.out.println("responding to event:" + event.getAction()+event.getBlockFace()+" @location:"+wec.locationToCoordinate(event.getClickedBlock().getLocation()));
+       System.out.println("responding to event:" + event.getAction()+" @location:"+ Utility.locationToBlockCoordinate(event.getClickedBlock().getLocation()));
     }
 }

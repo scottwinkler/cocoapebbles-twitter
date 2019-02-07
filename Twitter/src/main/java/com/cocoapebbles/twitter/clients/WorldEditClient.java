@@ -97,7 +97,7 @@ public class WorldEditClient {
     }
 
     public void drawSchematic(String schematic, Location location,boolean flip){
-        String coordinate = locationToCoordinate(location);
+        String coordinate = Utility.locationToBlockCoordinate(location);
         //load schematic only if it isn't already in the clipboard
         if(!_cachedSchematic.equals(schematic)){
             performCommand("/schematic load "+schematic);
@@ -124,15 +124,11 @@ public class WorldEditClient {
         } else {
             pos2 = Utility.relativePos(location,-dimensions.getLengthX()+1,dimensions.getHeightY()-1,-dimensions.getWidthZ()+1);
         }
-        String coordinate1 = locationToCoordinate(pos1);
-        String coordinate2 = locationToCoordinate(pos2);
+        String coordinate1 = Utility.locationToBlockCoordinate(pos1);
+        String coordinate2 = Utility.locationToBlockCoordinate(pos2);
         performCommand("/pos1 "+coordinate1);
         performCommand("/pos2 " + coordinate2);
         performCommand("/set "+block);
-    }
-
-    public String locationToCoordinate(Location location){
-        return location.getBlockX()+","+location.getBlockY()+","+location.getBlockZ();
     }
 
     public void performCommand(String command){

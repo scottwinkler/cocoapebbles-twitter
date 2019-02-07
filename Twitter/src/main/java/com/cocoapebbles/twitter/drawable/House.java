@@ -103,17 +103,16 @@ public class House implements Drawable{
             System.out.println("in region");
             World world = location.getWorld();
             Location localCoordinate = Utility.globalToLocalCoordinates(point,location,flip);
-            System.out.println(wec.locationToCoordinate(localCoordinate));
+            System.out.println(Utility.locationToCoordinate(localCoordinate));
             boolean isLike = localCoordinate.getBlockX() == 4;
             boolean isRetweet = localCoordinate.getBlockX() == 2;
             if (isLike){
                 System.out.println("is like");
                 //update like sign
-                Location signLocation = Utility.localToGlobalCoordinates(location,4,0,1,flip);
+                Location signLocation = Utility.localToGlobalCoordinates(location,4,1,1,flip);
                 Block signBlock = world.getBlockAt(signLocation);
                 Sign sign = (Sign) signBlock.getState();
                 long id = user.getStatus().getId();
-                System.out.println(id);
                 String text = "like (+1)";
                 try {
                     if (sign.getLine(1).equals(text)) {
@@ -130,7 +129,7 @@ public class House implements Drawable{
             } else if (isRetweet){
                 System.out.println("is retweet");
                 //update retweet sign
-                Location signLocation = Utility.localToGlobalCoordinates(location,2,0,1,flip);
+                Location signLocation = Utility.localToGlobalCoordinates(location,2,1,1,flip);
                 Block signBlock = world.getBlockAt(signLocation);
                 Sign sign = (Sign) signBlock.getState();
                 long id = user.getStatus().getId();
@@ -155,31 +154,32 @@ public class House implements Drawable{
         //Determine which house to draw based on how many followers the user has
         String schematic;
         int followersCount = user.getFollowersCount();
-        if(followersCount<500){
+        if(followersCount<10000){
             schematic = Schematics.POOR_HOUSE;
-        } else if (followersCount<10000){
+        } else if (followersCount<1000000){
             schematic = Schematics.NORMAL_HOUSE;
         } else{
             schematic = Schematics.RICH_HOUSE;
         }
 
-        wec.drawSchematic(schematic,location.add(0,1,0),flip);
+
+        wec.drawSchematic(schematic,Utility.relativePos(location,0,1,0),flip);
 
         String avatarUrl = user.get400x400ProfileImageURLHttps();
         String fileName = downloadImage(avatarUrl);
 
         //draw front avatar panel
-        Location imageLocation = Utility.localToGlobalCoordinates(location,3,9,4,flip);
+        Location imageLocation = Utility.localToGlobalCoordinates(location,3,10,4,flip);
         BlockFace blockFace = flip ? BlockFace.SOUTH : BlockFace.NORTH;
         wec.drawImage(fileName,imageLocation,blockFace);
 
         //draw back avatar panel;
-        imageLocation = Utility.localToGlobalCoordinates(location,1,9,4,flip);
+        imageLocation = Utility.localToGlobalCoordinates(location,1,10,4,flip);
         blockFace = flip ? BlockFace.NORTH : BlockFace.SOUTH;
         wec.drawImage(fileName,imageLocation,blockFace);
 
         //Create villager and remove existing if there is one
-        Location entityLocation = Utility.localToGlobalCoordinates(location,6,4,4,flip);
+        Location entityLocation = Utility.localToGlobalCoordinates(location,5,6,4,flip);
         World world = location.getWorld();
         Collection<Entity> entities = world.getNearbyEntities(location,20,20,20);
         String screenName = user.getScreenName();
@@ -201,14 +201,16 @@ public class House implements Drawable{
         wec.writeText(Long.toString(user.getId()),tweetText,tweetLocation,flip);
 
         //Create like and retweet buttons
-        Location votingLocation = Utility.localToGlobalCoordinates(location,2,0,0,flip);
+        Location votingLocation = Utility.localToGlobalCoordinates(location,2,1,0,flip);
+
         wec.drawSchematic(Schematics.VOTING,votingLocation,flip);
-        Location signLocation = Utility.localToGlobalCoordinates(location,4,0,1,flip);
+        Location signLocation = Utility.localToGlobalCoordinates(location,4,1,1,flip);
+        System.out.println(Utility.locationToCoordinate(signLocation));
         Block signBlock = world.getBlockAt(signLocation);
         Sign sign = (Sign) signBlock.getState();
         sign.setLine(1,"like (+1)");
         sign.update(true);
-        signLocation = Utility.localToGlobalCoordinates(location,2,0,1,flip);
+        signLocation = Utility.localToGlobalCoordinates(location,2,1,1,flip);
         signBlock = world.getBlockAt(signLocation);
         sign = (Sign) signBlock.getState();
         sign.setLine(1,"retweet (+1)");
@@ -217,12 +219,10 @@ public class House implements Drawable{
         lc.subscribe(Events.BUTTON_DOWN,e -> handleButtonDown(e));
 
         //Fill Chest with Tweets
-        Location chestLocation = Utility.localToGlobalCoordinates(location,6,0,5,flip);
-        System.out.println(wec.locationToCoordinate(chestLocation));
+        Location chestLocation = Utility.localToGlobalCoordinates(location,6,1,5,flip);
         Chest chest = (Chest) world.getBlockAt(chestLocation).getState();
         Inventory chestInventory = chest.getInventory().getHolder().getInventory();
         try{
-
             ResponseList<Status> statusResponseList = twitter.getUserTimeline(user.getId(),new Paging().count(54));
             statusResponseList.stream().limit(54).forEach(s -> chestInventory.addItem(createBook(s)));
         } catch(TwitterException e){
@@ -246,8 +246,8 @@ public class House implements Drawable{
 
     public void clear(){
         wec.setRegion(location,dimensions,flip, Blocks.AIR);
-        Location grassLocation = Utility.relativePos(location,0,-1,0);
-        wec.setRegion(grassLocation,dimensions,flip,Blocks.GRASS);
+        Location grassLocation = Utility.relativePos(location,0,0,0);
+        wec.setRegion(grassLocation,dimensions.getFlatDimensions(),flip,Blocks.GRASS);
         wec.removeText(Long.toString(user.getId()));
         String dataFolder = BukkitClient.getDataDir();
         String fileName = user.getScreenName()+".png";

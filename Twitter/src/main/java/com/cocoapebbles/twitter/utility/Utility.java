@@ -1,4 +1,5 @@
 package com.cocoapebbles.twitter.utility;
+import com.cocoapebbles.twitter.clients.WorldEditClient;
 import com.cocoapebbles.twitter.drawable.Dimensions;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Location;
@@ -34,6 +35,7 @@ public class Utility {
     }
 
     public static Location globalToLocalCoordinates(Location point, Location location, boolean flip){
+        System.out.println("Calculating global to local for: " + Utility.locationToCoordinate(point)+" with reference to location: "+Utility.locationToCoordinate(location));
         double xOffset = location.getX();
         double yOffset = -location.getY();
         double zOffset = location.getZ();
@@ -41,10 +43,14 @@ public class Utility {
             xOffset = -xOffset;
             zOffset = -zOffset;
         }
-        return new Location(location.getWorld(),point.getX()+xOffset,point.getY()+yOffset,point.getZ()+zOffset);
+        Location newLocation= new Location(location.getWorld(),point.getX()+xOffset,point.getY()+yOffset,point.getZ()+zOffset);
+        System.out.println("Output: "+Utility.locationToCoordinate(newLocation));
+        return newLocation;
     }
 
     public static boolean containsPoint(Location point, Location location, Dimensions dimensions, boolean flip){
+        //WorldEditClient wec = WorldEditClient.getInstance();
+       // System.out.println(wec.locationToCoordinate(point)+"|"+wec.locationToCoordinate(location));
         boolean xInside=true;
         boolean yInside=true;
         boolean zInside=true;
@@ -59,23 +65,35 @@ public class Utility {
         }
         xInside = (point.getX()<=leftX)&&(point.getX()>=rightX);
 
-        double bottomY= location.getY();
+        double bottomY= location.getY()-1;
         double topY=location.getY()+dimensions.getHeightY()-1;
+       // System.out.println ("bottomZ: "+bottomY+", topY: "+topY +", pointY: "+point.getY());
         yInside = (point.getY()<=topY)&&(point.getY()>=bottomY);
 
         double backZ;
         double forwardZ;
         if(!flip){
             backZ = location.getZ()+dimensions.getWidthZ()-1;
-            forwardZ = location.getZ();
+            forwardZ = location.getBlockZ();
         } else {
             backZ = location.getZ();
-            forwardZ = location.getZ()-dimensions.getWidthZ()+1;
+            forwardZ = location.getBlockZ()-dimensions.getWidthZ()+1;
         }
+        //System.out.println ("backZ: "+backZ+", forwardZ: "+forwardZ +", pointZ: "+point.getZ());
         zInside = (point.getZ()<=backZ)&&(point.getZ()>=forwardZ);
+        //System.out.println(xInside+","+yInside+","+zInside);
         return xInside&&yInside&&zInside;
 
     }
+
+    public static String locationToCoordinate(Location location){
+        return location.getX()+","+location.getY()+","+location.getZ();
+    }
+
+    public static String locationToBlockCoordinate(Location location){
+        return location.getBlockX()+","+location.getBlockY()+","+location.getBlockZ();
+    }
+
     public static String loadFile(String filePath){
         String out = null;
         try {

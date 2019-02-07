@@ -4,13 +4,12 @@ import com.cocoapebbles.twitter.Main;
 import com.cocoapebbles.twitter.Town;
 import com.cocoapebbles.twitter.clients.WorldEditClient;
 import org.bukkit.ChatColor;
-import org.bukkit.block.BlockFace;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.Arrays;
 
@@ -24,13 +23,13 @@ public class CommandHandler implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String cmdLabel, String[] args) {
         String[] otherArgs = Arrays.copyOfRange(args, 1, args.length);
         switch(args[0]){
-            case "friends": return friendHandler(sender,otherArgs);
+            case "town": return townHandler(sender,otherArgs);
             case "help": return helpHandler(sender,otherArgs);
             default: return false;
         }
     }
 
-    public boolean friendHandler(CommandSender sender, String[]args){
+    public boolean townHandler(CommandSender sender, String[]args){
         switch(args[0]) {
             case "clear": {
                 town.clearAll();
@@ -40,7 +39,10 @@ public class CommandHandler implements CommandExecutor {
                 Player player = (Player) sender;
                 WorldEditClient wec = WorldEditClient.getInstance();
                 wec.addPlayer(player);
-                town = new Town(player.getWorld());
+                World world = player.getWorld();
+                Location location = player.getLocation().subtract(0,1,0);
+                location = new Location(world,(int)location.getBlockX(),(int)location.getBlockY(),(int)location.getBlockZ());
+                town = new Town(world,location);
                 town.drawAll();
                 break;
             }
@@ -52,7 +54,8 @@ public class CommandHandler implements CommandExecutor {
         String[] message = new String[]{
                 ChatColor.AQUA+ "[Twitter] Cocoapebble's twitter Mod!",
                 ChatColor.AQUA+"  help: makes all your dreams come true",
-                ChatColor.AQUA+"  friends: makes all your dreams come true"
+                ChatColor.AQUA+"  town create: makes all your dreams come true",
+                ChatColor.AQUA+"  town clear: makes all your dreams come true"
         };
         sender.sendMessage(message);
         return true;
