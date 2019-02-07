@@ -6,6 +6,7 @@ import com.cocoapebbles.twitter.clients.TwitterClient;
 import com.cocoapebbles.twitter.clients.WorldEditClient;
 import com.cocoapebbles.twitter.constants.Blocks;
 import com.cocoapebbles.twitter.constants.Dim;
+import com.cocoapebbles.twitter.constants.Events;
 import com.cocoapebbles.twitter.constants.Schematics;
 import com.cocoapebbles.twitter.utility.Utility;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -41,10 +43,12 @@ public class House implements Drawable{
 
     private Twitter twitter;
     private WorldEditClient wec;
+    private ListenerClient lc;
 
     public House(){
         twitter = TwitterClient.getInstance().twitter;
         wec = WorldEditClient.getInstance();
+        lc = ListenerClient.getInstance();
     }
 
     public <T> void initialize(T entity,Location location, boolean flip){
@@ -78,11 +82,73 @@ public class House implements Drawable{
         return fileName;
     }
 
-    private void handleLike(Event e){
-        PlayerInteractEvent pie = (PlayerInteractEvent) e;
-        //check if player location is in the vicinity that would be described by this house
-        if(e.getPlayer().getLocation())
-        System.out.println("handling like event");
+    private void handleVillagerMurdered(Event event){
+        EntityDeathEvent e = (EntityDeathEvent) event;
+        Villager villager = (Villager) e.getEntity();
+        String screenName = user.getScreenName();
+        if(villager.getCustomName().equals(screenName)){
+            this.clear();
+            try {
+                twitter.friendsFollowers().destroyFriendship(screenName);
+            } catch(TwitterException tw){
+                tw.printStackTrace();
+            }
+        }
+    }
+
+    private void handleButtonDown(Event event){
+        PlayerInteractEvent e = (PlayerInteractEvent) event;
+        Location point = e.getClickedBlock().getLocation();
+        if(Utility.containsPoint(point,location,dimensions,flip)){
+            System.out.println("in region");
+            World world = location.getWorld();
+            Location localCoordinate = Utility.globalToLocalCoordinates(point,location,flip);
+            System.out.println(wec.locationToCoordinate(localCoordinate));
+            boolean isLike = localCoordinate.getBlockX() == 4;
+            boolean isRetweet = localCoordinate.getBlockX() == 2;
+            if (isLike){
+                System.out.println("is like");
+                //update like sign
+                Location signLocation = Utility.localToGlobalCoordinates(location,4,0,1,flip);
+                Block signBlock = world.getBlockAt(signLocation);
+                Sign sign = (Sign) signBlock.getState();
+                long id = user.getStatus().getId();
+                System.out.println(id);
+                String text = "like (+1)";
+                try {
+                    if (sign.getLine(1).equals(text)) {
+                        text = "undo like (-1)";
+                        twitter.favorites().createFavorite(id);
+                    } else {
+                        twitter.favorites().destroyFavorite(id);
+                    }
+                }catch(TwitterException twe){
+                    twe.printStackTrace();
+                }
+                sign.setLine(1,text);
+                sign.update();
+            } else if (isRetweet){
+                System.out.println("is retweet");
+                //update retweet sign
+                Location signLocation = Utility.localToGlobalCoordinates(location,2,0,1,flip);
+                Block signBlock = world.getBlockAt(signLocation);
+                Sign sign = (Sign) signBlock.getState();
+                long id = user.getStatus().getId();
+                String text = "retweet (+1)";
+                try {
+                    if (sign.getLine(1).equals(text)) {
+                        text = "undo retweet (-1)";
+                        twitter.tweets().retweetStatus(id);
+                    } else {
+                        twitter.tweets().unRetweetStatus(id);
+                    }
+                }catch(TwitterException twe){
+                    twe.printStackTrace();
+                }
+                sign.setLine(1,text);
+                sign.update();
+            }
+        }
     }
 
     public void draw(){
@@ -97,7 +163,7 @@ public class House implements Drawable{
             schematic = Schematics.RICH_HOUSE;
         }
 
-        wec.drawSchematic(schematic,location,flip);
+        wec.drawSchematic(schematic,location.add(0,1,0),flip);
 
         String avatarUrl = user.get400x400ProfileImageURLHttps();
         String fileName = downloadImage(avatarUrl);
@@ -113,7 +179,7 @@ public class House implements Drawable{
         wec.drawImage(fileName,imageLocation,blockFace);
 
         //Create villager and remove existing if there is one
-        Location entityLocation = Utility.localToGlobalCoordinates(location,6,5,4,flip);
+        Location entityLocation = Utility.localToGlobalCoordinates(location,6,4,4,flip);
         World world = location.getWorld();
         Collection<Entity> entities = world.getNearbyEntities(location,20,20,20);
         String screenName = user.getScreenName();
@@ -127,7 +193,7 @@ public class House implements Drawable{
         villager.setCustomName(screenName);
         villager.setProfession(Villager.Profession.NITWIT);
         villager.setCareer(Villager.Career.NITWIT);
-        villager.setAI(false);
+        lc.subscribe(Events.VILLAGER_MURDERED,e->handleVillagerMurdered(e));
 
         //Set latest tweet
         Location tweetLocation = Utility.localToGlobalCoordinates(location,4,2,0,flip);
@@ -135,17 +201,20 @@ public class House implements Drawable{
         wec.writeText(Long.toString(user.getId()),tweetText,tweetLocation,flip);
 
         //Create like and retweet buttons
-        Location likeLocation = Utility.localToGlobalCoordinates(location,4,0,0,flip);
-        world.getBlockAt(likeLocation).setType(Material.STONE_PRESSURE_PLATE);
-        Location likeSignLocation = Utility.localToGlobalCoordinates(location,4,0,1,flip);
-        Block signBlock = world.getBlockAt(likeSignLocation);
-
-        signBlock.setType(Material.SIGN);
+        Location votingLocation = Utility.localToGlobalCoordinates(location,2,0,0,flip);
+        wec.drawSchematic(Schematics.VOTING,votingLocation,flip);
+        Location signLocation = Utility.localToGlobalCoordinates(location,4,0,1,flip);
+        Block signBlock = world.getBlockAt(signLocation);
         Sign sign = (Sign) signBlock.getState();
         sign.setLine(1,"like (+1)");
         sign.update(true);
-        ListenerClient lc = ListenerClient.getInstance();
-        lc.subscribe(PlayerInteractEvent.class.getName(),e -> handleLike(e));
+        signLocation = Utility.localToGlobalCoordinates(location,2,0,1,flip);
+        signBlock = world.getBlockAt(signLocation);
+        sign = (Sign) signBlock.getState();
+        sign.setLine(1,"retweet (+1)");
+        sign.update(true);
+
+        lc.subscribe(Events.BUTTON_DOWN,e -> handleButtonDown(e));
 
         //Fill Chest with Tweets
         Location chestLocation = Utility.localToGlobalCoordinates(location,6,0,5,flip);
@@ -177,6 +246,12 @@ public class House implements Drawable{
 
     public void clear(){
         wec.setRegion(location,dimensions,flip, Blocks.AIR);
-        wec.setRegion(location,dimensions.getFlatDimensions(),flip,Blocks.GRASS);
+        Location grassLocation = Utility.relativePos(location,0,-1,0);
+        wec.setRegion(grassLocation,dimensions,flip,Blocks.GRASS);
+        wec.removeText(Long.toString(user.getId()));
+        String dataFolder = BukkitClient.getDataDir();
+        String fileName = user.getScreenName()+".png";
+        String filePath= dataFolder.replace("/Twitter","")+ "/Images/"+fileName;
+        Utility.deleteFile(filePath);
     }
 }

@@ -1,4 +1,5 @@
 package com.cocoapebbles.twitter.utility;
+import com.cocoapebbles.twitter.drawable.Dimensions;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Location;
 
@@ -32,6 +33,49 @@ public class Utility {
         return relativePos(location,xOffset,yOffset,zOffset);
     }
 
+    public static Location globalToLocalCoordinates(Location point, Location location, boolean flip){
+        double xOffset = location.getX();
+        double yOffset = -location.getY();
+        double zOffset = location.getZ();
+        if(!flip){
+            xOffset = -xOffset;
+            zOffset = -zOffset;
+        }
+        return new Location(location.getWorld(),point.getX()+xOffset,point.getY()+yOffset,point.getZ()+zOffset);
+    }
+
+    public static boolean containsPoint(Location point, Location location, Dimensions dimensions, boolean flip){
+        boolean xInside=true;
+        boolean yInside=true;
+        boolean zInside=true;
+        double leftX;
+        double rightX;
+        if(!flip){
+            leftX = location.getX()+dimensions.getLengthX()-1;
+            rightX = location.getX();
+        } else{
+            leftX = location.getX();
+            rightX = location.getX()-dimensions.getLengthX()+1;
+        }
+        xInside = (point.getX()<=leftX)&&(point.getX()>=rightX);
+
+        double bottomY= location.getY();
+        double topY=location.getY()+dimensions.getHeightY()-1;
+        yInside = (point.getY()<=topY)&&(point.getY()>=bottomY);
+
+        double backZ;
+        double forwardZ;
+        if(!flip){
+            backZ = location.getZ()+dimensions.getWidthZ()-1;
+            forwardZ = location.getZ();
+        } else {
+            backZ = location.getZ();
+            forwardZ = location.getZ()-dimensions.getWidthZ()+1;
+        }
+        zInside = (point.getZ()<=backZ)&&(point.getZ()>=forwardZ);
+        return xInside&&yInside&&zInside;
+
+    }
     public static String loadFile(String filePath){
         String out = null;
         try {
@@ -42,6 +86,15 @@ public class Utility {
             e.printStackTrace();
         }
         return out;
+    }
+
+    public static void deleteFile(String filePath){
+        Path path = Paths.get(filePath);
+        try {
+            Files.deleteIfExists(path);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     public static void saveFile(String filePath, String content){

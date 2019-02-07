@@ -92,9 +92,11 @@ public class WorldEditClient {
          performCommand("hd reload");
     }
 
+    public void removeText(String id){
+        performCommand("hd delete "+id);
+    }
+
     public void drawSchematic(String schematic, Location location,boolean flip){
-        //correction for the save file oddity
-        location.add(0,1,0);
         String coordinate = locationToCoordinate(location);
         //load schematic only if it isn't already in the clipboard
         if(!_cachedSchematic.equals(schematic)){
@@ -133,7 +135,7 @@ public class WorldEditClient {
         return location.getBlockX()+","+location.getBlockY()+","+location.getBlockZ();
     }
 
-    private void performCommand(String command){
+    public void performCommand(String command){
         Player player = this.getPlayer();
         player.performCommand(command);
     }

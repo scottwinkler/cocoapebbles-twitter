@@ -32,13 +32,17 @@ public class CommandHandler implements CommandExecutor {
 
     public boolean friendHandler(CommandSender sender, String[]args){
         switch(args[0]) {
-            case "clear": town.clearAll();
+            case "clear": {
+                town.clearAll();
+                break;
+            }
             case "create": {
                 Player player = (Player) sender;
                 WorldEditClient wec = WorldEditClient.getInstance();
                 wec.addPlayer(player);
                 town = new Town(player.getWorld());
                 town.drawAll();
+                break;
             }
         }
         return true;

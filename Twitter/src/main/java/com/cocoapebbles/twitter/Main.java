@@ -3,9 +3,7 @@ package com.cocoapebbles.twitter;
 import com.cocoapebbles.twitter.clients.BukkitClient;
 import com.cocoapebbles.twitter.commands.CommandHandler;
 
-import com.cocoapebbles.twitter.events.PlayerInteract;
-import com.cocoapebbles.twitter.events.PlayerJoin;
-import com.cocoapebbles.twitter.events.PlayerLeave;
+import com.cocoapebbles.twitter.events.*;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,6 +42,8 @@ public class Main extends JavaPlugin implements Listener{
         pm.registerEvents(new PlayerJoin(),this);
         pm.registerEvents(new PlayerLeave(),this);
         pm.registerEvents(new PlayerInteract(),this);
+        pm.registerEvents(new EntityDeath(),this);
+        pm.registerEvents(new PlayerEditBook(),this);
     }
 
 

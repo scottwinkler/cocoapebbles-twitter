@@ -26,12 +26,12 @@ public class ListenerClient {
         }
     }
 
-    public void handleEvent(Event event){
-        String eventName = event.getEventName();
+    public void handleEvent(String eventName, Event event){
+        //String eventName = event.getEventName();
         System.out.println("entry set:");
         listenerMap.entrySet().forEach(item->System.out.println(item.getKey()+"count: "+item.getValue().size()));
-        System.out.println(eventName+event.getClass().getName());
-        eventName = event.getClass().getName();
+      //  System.out.println(eventName+event.getClass().getName());
+       // eventName = event.getClass().getName();
         if(listenerMap.containsKey(eventName)){
             ArrayList<Consumer<Event>> consumers = listenerMap.get(eventName);
             System.out.println("consumers #:"+consumers.size());
